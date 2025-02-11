@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
+
 import { CreateTestBookDTO, DatabaseError } from "./types";
 import {
   createConnection,
@@ -12,7 +13,7 @@ import sqlite3 from "sqlite3";
 
 const app = express();
 const port = process.env.PORT || 3000;
-
+const ia = process.env.I_ACCESS || "";
 let db: sqlite3.Database;
 
 // Error handling middleware
@@ -34,19 +35,48 @@ const errorHandler = (
 async function initializeApp() {
   try {
     // Initialize database connection
-    db = await createConnection("books.db");
+    db = createConnection("books.db");
     console.log("Database initialized successfully");
 
+    app.use(express.json());
     app.use(
       cors({
-        origin: process.env.CORS_ORIGIN || "*",
+        origin: [
+          // "http://localhost:5173",
+          // "http://localhost:3000",
+          "https://holo-elden.netlify.app",
+        ],
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
+        allowedHeaders: [
+          "Content-Type",
+          "Authorization",
+          "ngrok-skip-browser-warning",
+        ],
       })
     );
+    app.use((req, res, next) => {
+      const allowedOrigins = ["https://holo-elden.netlify.app"]; // Replace with your Netlify app URL
+      const origin: string = req.headers.origin || "";
 
-    app.use(express.json());
-
+      if (allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header(
+          "Access-Control-Allow-Methods",
+          "GET, POST, PUT, DELETE, OPTIONS"
+        );
+        res.header(
+          "Access-Control-Allow-Headers",
+          "Content-Type, Authorization, ngrok-skip-browser-warning"
+        );
+        next();
+      } else {
+        res.status(403).json({ error: "Access denied" }); // Block requests from unauthorized origins
+      }
+    });
+    app.get("/", async (req, res) => {
+      res.send("Hello World!");
+      console.log("Accessed!");
+    });
     // GET all books
     app.get(
       "/books",
