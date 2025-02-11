@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ES2020", // Use modern JavaScript features
+    "module": "CommonJS", // Use CommonJS modules (Node.js default)
+    "outDir": "./dist", // Output directory for compiled JS files
+    "rootDir": "./src", // Source directory for TypeScript files
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Allow default imports for CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names
+    "moduleResolution": "node", // Use Node.js-style module resolution
+
+    /* Additional Checks */
+    "noUnusedLocals": false, // Report errors on unused locals
+    "noUnusedParameters": false, // Report errors on unused parameters
+    "noImplicitReturns": true, // Report errors when not all code paths return a value
+    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statements
+
+    /* Advanced Options */
+    "sourceMap": true, // Generate source maps for debugging
+    "removeComments": true, // Remove comments from the output
+    "incremental": true // Enable incremental compilation for faster builds
+  },
+  "include": ["src/**/*.ts"], // Include all TypeScript files in the src directory
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and the output directory
+}
