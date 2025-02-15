@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
     "start": "node dist/server.js",
+    "build": "tsc",
     "dev": "ts-node src/server.ts"
   },
   "author": "",
@@ -12,8 +12,9 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.13.3"
   },
   "overrides": {
     "glob": "11.0.0",
@@ -23,6 +24,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
+    "@types/pg": "^8.11.11",
     "@types/sqlite3": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

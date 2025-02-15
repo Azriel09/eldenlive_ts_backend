@@ -22,6 +22,6 @@
     "removeComments": true, // Remove comments from the output
     "incremental": true // Enable incremental compilation for faster builds
   },
-  "include": ["src/**/*.ts"], // Include all TypeScript files in the src directory
+  "include": ["src/**/*.ts", "src/database/postgres.ts"], // Include all TypeScript files in the src directory
   "exclude": ["node_modules", "dist"] // Exclude node_modules and the output directory
 }
