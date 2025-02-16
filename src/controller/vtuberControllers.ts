@@ -8,9 +8,9 @@ export const getVtubers = async (req: Request, res: Response): Promise<any> => {
     if (!data) {
       return res.status(404).json({ message: "No data found" });
     }
-    return res.status(200).json(data); // Explicitly return the response
+    return res.status(200).json(data); 
   } catch (error) {
     console.error("Error in getVtubers:", error);
-    return res.status(500).json({ message: "Internal Server Error" }); // Ensure a response is returned
+    return res.status(500).json({ message: "Internal Server Error" }); 
   }
 };

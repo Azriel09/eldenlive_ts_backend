@@ -2,6 +2,7 @@ import { Client } from "pg";
 import { VtuberData, InputData, FetchedData } from "./types-postgres";
 import dotenv from "dotenv";
 dotenv.config();
+
 // Initialize
 const client = new Client({
   user: process.env.PG_USER,
@@ -22,38 +23,32 @@ export async function connectToDatabase() {
 }
 export default client;
 
-// Insert data into the database
 async function insertData(data: InputData) {
   try {
-    // Start a transaction
     await client.query("BEGIN");
 
     for (const [vtuber_name, vtuberData] of Object.entries(data)) {
       console.log(vtuber_name);
-      // Insert into `vtuber` table
+
       const vtuberRes = await client.query(
         "INSERT INTO vtubers (vtuber_name) VALUES ($1) RETURNING id",
         [vtuber_name]
       );
       const vtuberId = vtuberRes.rows[0].id;
 
-      // Insert videos, timestamps, and enemies
       const { video_url, timestamp, enemy } = vtuberData;
       for (let i = 0; i < video_url.length; i++) {
-        // Insert into `videos` table
         const videoRes = await client.query(
           "INSERT INTO videos (vtuber_id, url) VALUES ($1, $2) RETURNING id",
           [vtuberId, video_url[i]]
         );
         const videoId = videoRes.rows[0].id;
 
-        // Insert into `timestamps` table
         await client.query(
           "INSERT INTO timestamps (video_id, timestamp) VALUES ($1, $2)",
           [videoId, timestamp[i]]
         );
 
-        // Insert into `enemies` table
         await client.query(
           "INSERT INTO enemies (video_id, enemy) VALUES ($1, $2)",
           [videoId, enemy[i]]
@@ -74,58 +69,44 @@ async function insertData(data: InputData) {
 export async function fetchData(): Promise<FetchedData | null> {
   try {
     const result = await client.query(`
-      SELECT y.vtuber_name AS vtuber_name, v.url AS video_url, t.timestamp, e.enemy
-      FROM vtubers y
-      JOIN videos v ON y.id = v.vtuber_id
-      JOIN timestamps t ON v.id = t.video_id
-      JOIN enemies e ON v.id = e.video_id
+    SELECT
+      y.vtuber_name AS vtuber_name,
+      v.url AS video_url,
+      t.timestamp,
+      e.enemy_name AS enemy_name
+    FROM vtubers y
+    JOIN videos v ON y.id = v.vtuber_id
+    JOIN timestamps t ON v.id = t.video_id
+    JOIN enemies e ON t.enemy_id = e.id;
     `);
 
-    const data: FetchedData = {};
+    const temp_data: FetchedData = {};
     result.rows.forEach((row) => {
       const vtuberName = row.vtuber_name;
       if (!vtuberName) return;
 
-      if (!data[vtuberName]) {
-        data[vtuberName] = {
+      if (!temp_data[vtuberName]) {
+        temp_data[vtuberName] = {
           video_url: [],
           timestamp: [],
           enemy: [],
         };
       }
 
-      data[vtuberName].video_url.push(row.video_url);
-      data[vtuberName].timestamp.push(row.timestamp);
-      data[vtuberName].enemy.push(row.enemy);
+      temp_data[vtuberName].video_url.push(row.video_url);
+      temp_data[vtuberName].timestamp.push(row.timestamp);
+      temp_data[vtuberName].enemy.push(row.enemy_name);
     });
 
-    return Object.keys(data).length > 0 ? data : null;
+    const data: any = {};
+    Object.keys(temp_data).map((vtuber) => {
+      const temp_arr = [...new Set(temp_data[vtuber].video_url)];
+      temp_data[vtuber].video_url = temp_arr;
+      data[vtuber] = temp_data[vtuber];
+    });
+    return Object.keys(temp_data).length > 0 ? temp_data : null;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null; // Returns a value in case of error
   }
 }
-
-// Main function
-// (async () => {
-//   await connectToDatabase();
-
-//   // Example data to insert
-//   const data = {
-//     vtuber1: {
-//       video_url: ["url1", "url2"],
-//       timestamp: ["timestamp1", "timestamp2"],
-//       enemy: ["enemy1", "enemy2"],
-//     },
-//     vtuber2: {
-//       video_url: ["url3", "url4"],
-//       timestamp: ["timestamp1", "timestamp3"],
-//       enemy: ["enemy1", "enemy3"],
-//     },
-//   };
-
-//   await insertData(data);
-//   await fetchData();
-
-//   await client.end();
-// })();
