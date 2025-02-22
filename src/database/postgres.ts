@@ -28,46 +28,50 @@ export default client;
 export async function fetchData(): Promise<any> {
   try {
     const result = await client.query(`
-  WITH ordered_data AS (
+      WITH ordered_timestamps AS (
           SELECT 
+            v.id as vtuber_id,
             v.vtuber_name,
             vid.id as video_id,
             vid.url as video_url,
-            t.timestamp,
-            e.enemy_name,
-            ROW_NUMBER() OVER (PARTITION BY v.vtuber_name, vid.url ORDER BY t.id) as rn
+            array_agg(t.timestamp ORDER BY t.id) as timestamps,
+            array_agg(e.enemy_name ORDER BY t.id) as enemies
           FROM vtubers v
           JOIN videos vid ON v.id = vid.vtuber_id
           JOIN timestamps t ON vid.id = t.video_id
           JOIN enemies e ON t.enemy_id = e.id
+          GROUP BY v.id, v.vtuber_name, vid.id, vid.url
           ORDER BY vid.id
-        ),
-        video_data AS (
-          SELECT 
-            vtuber_name,
-            video_url,
-            array_agg(timestamp ORDER BY rn) as timestamps,
-            array_agg(enemy_name ORDER BY rn) as enemies
-          FROM ordered_data
-          GROUP BY vtuber_name, video_id, video_url
-          ORDER BY video_id
         )
         SELECT 
+          vtuber_id,
           vtuber_name,
-          json_object_agg(
-            video_url,
+          array_agg(
             json_build_object(
+              'video_id', video_id,
+              'video_url', video_url,
               'timestamps', timestamps,
               'enemies', enemies
             )
-          ) as video_data
-        FROM video_data
-        GROUP BY vtuber_name;
+            ORDER BY video_id
+          ) as videos
+        FROM ordered_timestamps
+        GROUP BY vtuber_id, vtuber_name
+        ORDER BY vtuber_id;
     `);
+    const data = result.rows.map((row) => {
+      const videosData = row.videos.reduce((acc: any, video: any) => {
+        acc[video.video_url] = {
+          timestamps: video.timestamps,
+          enemies: video.enemies,
+        };
+        return acc;
+      }, {});
 
-    const data = result.rows.map((row) => ({
-      [row.vtuber_name]: row.video_data,
-    }));
+      return {
+        [row.vtuber_name]: videosData,
+      };
+    });
 
     return data;
   } catch (error) {

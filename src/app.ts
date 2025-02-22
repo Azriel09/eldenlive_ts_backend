@@ -11,8 +11,8 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      // "http://localhost:5173",
-      // "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:3000",
       "https://holo-elden.netlify.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -24,7 +24,10 @@ app.use(
   })
 );
 app.use((req, res, next) => {
-  const allowedOrigins = ["https://holo-elden.netlify.app"];
+  const allowedOrigins = [
+    "https://holo-elden.netlify.app",
+    "http://localhost:5173",
+  ];
   const origin: string = req.headers.origin || "";
 
   if (allowedOrigins.includes(origin)) {
