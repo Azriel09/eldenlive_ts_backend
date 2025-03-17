@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { getVtubers } from "../controller/vtuberControllers";
+import { getDeathsData, getBossData } from "../controller/vtuberControllers";
 
 const router = Router();
 
-router.get("/vtubers", getVtubers);
+router.get("/deaths", getDeathsData);
+router.get("/boss", getBossData);
+
 
 export default router;

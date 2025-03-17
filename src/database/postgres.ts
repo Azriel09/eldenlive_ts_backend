@@ -1,7 +1,13 @@
 import { Client } from "pg";
 
 import dotenv from "dotenv";
+interface EnemyDeath {
+  [enemy_name: string]: number;
+}
 
+interface VtuberDeaths {
+  [vtuber_name: string]: EnemyDeath[];
+}
 dotenv.config();
 
 // Initialize
@@ -25,7 +31,7 @@ export async function connectToDatabase() {
 export default client;
 
 // Fetch data from database
-export async function fetchData(): Promise<any> {
+export async function fetchDeathsData(): Promise<any> {
   try {
     const result = await client.query(`
       WITH ordered_timestamps AS (
@@ -74,6 +80,46 @@ export async function fetchData(): Promise<any> {
     });
 
     return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // Returns a value in case of error
+  }
+}
+
+export async function fetchBossData(): Promise<any> {
+  try {
+    const result = await client.query(`
+      SELECT 
+        v.vtuber_name,
+        REPLACE(e.enemy_name, 'Boss', '') AS enemy_name,
+        COUNT(*) as death_count
+      FROM 
+        vtubers v
+      JOIN 
+        videos vid ON v.id = vid.vtuber_id
+      JOIN 
+        timestamps t ON vid.id = t.video_id
+      JOIN 
+        enemies e ON t.enemy_id = e.id
+      WHERE
+        e.enemy_name LIKE '%Boss%'
+      GROUP BY 
+        v.vtuber_name, REPLACE(e.enemy_name, 'Boss', '')
+      ORDER BY 
+        v.vtuber_name, death_count DESC
+    `);
+    const formattedData: VtuberDeaths = {};
+
+    result.rows.forEach((row) => {
+      if (!formattedData[row.vtuber_name]) {
+        formattedData[row.vtuber_name] = [];
+      }
+
+      formattedData[row.vtuber_name].push({
+        [row.enemy_name]: parseInt(row.death_count),
+      });
+    });
+    return formattedData;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null; // Returns a value in case of error
