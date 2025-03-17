@@ -89,9 +89,9 @@ export async function fetchDeathsData(): Promise<any> {
 export async function fetchBossData(): Promise<any> {
   try {
     const result = await client.query(`
-      SELECT 
+        SELECT 
         v.vtuber_name,
-        REPLACE(e.enemy_name, 'Boss', '') AS enemy_name,
+        REPLACE(e.enemy_name, ' Boss', '') AS enemy_name,
         COUNT(*) as death_count
       FROM 
         vtubers v
@@ -102,9 +102,9 @@ export async function fetchBossData(): Promise<any> {
       JOIN 
         enemies e ON t.enemy_id = e.id
       WHERE
-        e.enemy_name LIKE '%Boss%'
+        e.enemy_name LIKE '% Boss%'
       GROUP BY 
-        v.vtuber_name, REPLACE(e.enemy_name, 'Boss', '')
+        v.vtuber_name, REPLACE(e.enemy_name, ' Boss', '')
       ORDER BY 
         v.vtuber_name, death_count DESC
     `);
